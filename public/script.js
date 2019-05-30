@@ -68,10 +68,7 @@ function setup() {
     background(backgroundColor);
     // changingBG()
     
-    
     var spectrum = fft.analyze();
-    volume = amplitude.getLevel();
-    
     // drawBars(spectrum, w)
     drawParticles(binCount, spectrum)
     // drawParticles(binCount, volume)
@@ -81,7 +78,6 @@ function setup() {
 function changingBG() {
   var level = amplitude.getLevel();
   detectBeat(level);
-  
 }
 
 function detectBeat(level) {
@@ -133,15 +129,11 @@ Particle.prototype.update = function(someLevel) {
   this.diameter = map(someLevel, 0, 255, 30, 0) * this.scale * theyExpand;
 
   var hue = map(someLevel, 0, 255, 0, 360);
-  // var sat = 90;
   var sat = map(volume, 0, 0.5, 80, 100);
- // var sat = map(someLevel, 0, 255, 40, 80);
   var bri = map(volume, 0, 0.5, 60, 100);
-  // var bri = map(this.radius, 0, width/1.2, 80, 100);
   var alp = map(volume, 0, 0.5, 60, 100);
 
   fill(hue,sat,bri,alp);
-  // fill(random(0,255), random(0,255), random(0,255) );
   ellipse(this.position.x, this.position.y, this.diameter, this.diameter);
 
 }
