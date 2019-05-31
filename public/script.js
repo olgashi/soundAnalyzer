@@ -18,6 +18,7 @@ var bubbles = new Array(binCount);
 let w = 20;
 let img;
 let startTime;
+
 function toggleSong() {
   if (song.isPlaying()) {
     song.pause();
@@ -90,7 +91,7 @@ function toggleVisual() {
 function draw() {
   background(backgroundColor);
   spectrum = fft.analyze();
-  changingBG();
+  // changingBG(256);
   // toggleVisual()
   // drawCircle()
   drawStar()
@@ -98,14 +99,14 @@ function draw() {
  
 }
 
-function changingBG() {
+function changingBG(maxVal) {
   var level = amplitude.getLevel();
-  detectBeat(level);
+  detectBeat(level, maxVal);
 }
 
-function detectBeat(level) {
+function detectBeat(level, maxVal) {
   if (level > beatCutoff && level > beatThreshold) {
-    onBeat(level);
+    onBeat(maxVal);
     beatCutoff = level * 1.3;
     framesSinceLastBeat = 0;
   } else {
@@ -118,8 +119,8 @@ function detectBeat(level) {
   }
 }
 
-function onBeat(level) {
-  backgroundColor = color(random(0, 255), random(0, 255), random(0, 255));
+function onBeat(maxVal) {
+  backgroundColor = color(random(0, maxVal), random(0, maxVal), random(0, maxVal));
 }
 
 function drawBars() {
@@ -207,21 +208,17 @@ function drawCircle(){
 
 function drawStar(){
   var spectrum = fft.analyze();
-  // noStroke();
   colorMode(RGB)
-  background(0)
+  changingBG(30)
   translate(width / 2, height / 5);
   for (var i = 0; i < spectrum.length; i++) {
     var angle = map(i, 0, spectrum.length, 0, 100);
     var amp = spectrum[i];
     var r = map(amp, 0, 1024, 15, 50);
-    // fill(255, 255, 255);
     var x = r * cos(angle);
     var y = r * sin(angle);
-    // stroke(255, 255, i, 23);
     stroke(i, random(0, i), 255, 20);
     strokeWeight(1.5)
-    // stroke(70, 255, 255, 23);
     line(0, 0, x, y);
     
     var r = map(amp, 0, 256, 0, 300);
@@ -233,85 +230,30 @@ function drawStar(){
     line(0, 0, x, y);
   }
 
-  // Little lights, left to right
-
   //lights on the left
   strokeWeight(2)
-  translate(-500, -50);
-  for (var i = 0; i < 500; i++) {
-    colorMode(RGB)
-    var angle = map(i, 0, spectrum.length, 0, 100);
-    var amp = spectrum[i];
-    var r = map(amp-10, 0, 256, 0, 70);
-    fill(255, 0, 0);
-    var x = r * cos(angle);
-    var y = r * sin(angle);
-    stroke(255, 0, 196, 13);
-    line(0, 0, x, y);
-}
-
-translate(100, 0);
-  for (var i = 0; i < 500; i++) {
-    colorMode(RGB)
-    var angle = map(i, 0, spectrum.length, 0, 100);
-    var amp = spectrum[i];
-    var r = map(amp-10, 0, 256, 0, 70);
-    fill(255, 0, 0);
-    var x = r * cos(angle);
-    var y = r * sin(angle);
-    stroke(188, 255, 0, 13);
-    line(0, 0, x, y);
-  }
-  
-  translate(100, 0);
-  for (var i = 0; i < 500; i++) {
-    colorMode(RGB)
-    var angle = map(i, 0, spectrum.length, 0, 100);
-    var amp = spectrum[i];
-    var r = map(amp-10, 0, 256, 0, 70);
-    fill(255, 0, 0);
-    var x = r * cos(angle);
-    var y = r * sin(angle);
-    stroke(255, 128, 0, 13);
-    line(0, 0, x, y);
-  }
+  drawLight(-500, -50, spectrum, 255, 0, 196, 13)
+  drawLight(100, 0, spectrum, 188, 255, 0, 13)
+  drawLight(100, 0, spectrum, 255, 128, 0, 13)
   
   //lights on the right
-translate(600, 0);
+  drawLight(600, 0, spectrum, 255, 255, 0, 13)
+  drawLight(100, 0, spectrum, 111, 255, 0, 13)
+  drawLight(100, 0, spectrum, 0, 196, 255, 13)
+
+}
+
+function drawLight(pos1, pos2, spectrum, clr1, clr2, clr3, alpha){
+  translate(pos1, pos2);
   for (var i = 0; i < 500; i++) {
     colorMode(RGB)
-    var angle = map(i, 0, spectrum.length, 0, 180);
+    var angle = map(i, 0, spectrum.length, 0, 100);
     var amp = spectrum[i];
     var r = map(amp-10, 0, 256, 0, 70);
     fill(255, 0, 0);
     var x = r * cos(angle);
     var y = r * sin(angle);
-    stroke(255, 255, i, 13);
+    stroke(clr1, clr2, clr3, alpha);
     line(0, 0, x, y);
 }
-translate(100, 0);
-  for (var i = 0; i < 500; i++) {
-    colorMode(RGB)
-    var angle = map(i, 0, spectrum.length, 0, 100);
-    var amp = spectrum[i];
-    var r = map(amp-10, 0, 256, 0, 70);
-    fill(255, 0, 0);
-    var x = r * cos(angle);
-    var y = r * sin(angle);
-    stroke(111, 255, 0, 13);
-    line(0, 0, x, y);
-  }
-  
-  translate(100, 0);
-  for (var i = 0; i < 500; i++) {
-    colorMode(RGB)
-    var angle = map(i, 0, spectrum.length, 0, 100);
-    var amp = spectrum[i];
-    var r = map(amp-10, 0, 256, 0, 70);
-    fill(255, 0, 0);
-    var x = r * cos(angle);
-    var y = r * sin(angle);
-    stroke(0, 196, 255, 13);
-    line(0, 0, x, y);
-  }
 }
