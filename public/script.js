@@ -1,20 +1,23 @@
+//Beat is from
+// https://github.com/therewasaguy/p5-music-viz/blob/master/demos/01d_beat_detect_amplitude/sketch.js
 var song;
 var fft;
 var button;
 var backgroundColor;
 var beatCutoff = 0;
-var beatDecayRate = 0.9;
+var beatDecayRate = 0.1;
 var framesSinceLastBeat = 0;
-var beatHoldFrames = 40;
+var beatHoldFrames = 25;
 var beatThreshold = 0.11;
-var binCount = 128; // size of resulting FFT array. Must be a power of 2 between 16 and 1024
-var bubbles = new Array(binCount);
-var stars = new Array(binCount);
+var binCount = 256; // size of resulting FFT array. Must be a power of 2 between 16 and 1024
 var volume = 0.01;
-let angle = 0.0;
-let jitter = 0.0;
-let smoothing = 0.6;
-
+let smoothing = 0.8;
+var visual = "bars";
+var spectrum;
+var bubbles = new Array(binCount);
+let w = 20;
+let img;
+let startTime;
 function toggleSong() {
   if (song.isPlaying()) {
     song.pause();
@@ -23,39 +26,43 @@ function toggleSong() {
   }
 }
 
-function toggleVisual() {}
-
 function preload() {
-  song = loadSound('Meek Mill-Going Bad.mp3');
-  // song = loadSound("Undercover Of The Night.mp3");
+  // song = loadSound("Meek Mill-Going Bad.mp3");
+  startTime = new Date().getTime() / 1000
+  // song = loadSound("(I Can't Get No) Satisfaction.mp3")
+  // song = loadSound("Meek Mill-Oodles O' Noodles Babies.mp3");
+  song = loadSound("Undercover Of The Night.mp3");
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight / 2);
+  img = loadImage("dino.jpg")
   colorMode(HSB, 100);
-
+ 
+  
   button = createButton("Play/Pause");
   button.mousePressed(toggleSong);
+  
+  visualButton = createButton("Toggle Visual");
+  visualButton.mouseClicked(toggleVisual);
 
-  // styleButton = createButton("Toggle Visual");
-  var styleButton = document.createElement("BUTTON");
-  styleButton.innerHTML = "Toggle Visual"
-  document.body.appendChild(styleButton)
-  styleButton.addEventListener('click', ()=> {alert('clicked')})
+  
   song.play();
-  fft = new p5.FFT(smoothing, 128);
-  amplitude = new p5.Amplitude();
+  fft = new p5.FFT(smoothing, 512);
+  spectrum = fft.analyze();
 
+  amplitude = new p5.Amplitude();
+  
   amplitude.setInput(song);
   amplitude.smooth(0.9);
-
+  
   volume = amplitude.getLevel();
-
-  w = width / 100;
+  
+  // w = width / 100;
   backgroundColor = color(0, 0, 255);
   
+  // toggleVisual(visual);
   //bubbles
-
   for (var i = 0; i < bubbles.length; i++) {
     var position = createVector(
       // x position corresponds with position in the frequency spectrum
@@ -65,25 +72,40 @@ function setup() {
     bubbles[i] = new Bubble(position);
   }
 
+  
+
   // rectMode(CENTER);
 }
 
+function mouseClicked(){
+  visual = visual ==='bubbles' ? 'bar' : 'bubbles';
+  redraw();
+ 
+}
+
+function toggleVisual() {
+  visual == "bubbles" ? drawbubbles() : drawBars()
+  }
+
 function draw() {
   background(backgroundColor);
-  changingBG()
-  var spectrum = fft.analyze();
-  // drawbubbles(binCount, spectrum)
-  drawBars(spectrum, w);
+  spectrum = fft.analyze();
+  changingBG();
+  // toggleVisual()
+  // drawCircle()
+  drawStar()
+
+ 
 }
 
 function changingBG() {
   var level = amplitude.getLevel();
-  detectBeat(level, "background");
+  detectBeat(level);
 }
 
-function detectBeat(level, action) {
+function detectBeat(level) {
   if (level > beatCutoff && level > beatThreshold) {
-    onBeat(action);
+    onBeat(level);
     beatCutoff = level * 1.3;
     framesSinceLastBeat = 0;
   } else {
@@ -96,15 +118,11 @@ function detectBeat(level, action) {
   }
 }
 
-function onBeat(action) {
-  if (action === "background") {
-    backgroundColor = color(random(0, 255), random(0, 255), random(0, 255));
-  } else if (action === "jitter") {
-    jitter = random(-0.4, 0.4);
-  }
+function onBeat(level) {
+  backgroundColor = color(random(0, 255), random(0, 255), random(0, 255));
 }
 
-function drawBars(spectrum, w) {
+function drawBars() {
   for (var i = 0; i < spectrum.length; i++) {
     fill(i, i, 255);
     var h = -height + map(spectrum[i], 0, 255, height, 0);
@@ -116,12 +134,10 @@ function drawBars(spectrum, w) {
 
 var Bubble = function(position) {
   this.position = position;
-  this.scale = random(1, 6);
-  this.speed = createVector(0, random(0, 4));
+  this.scale = random(0, 4);
+  this.speed = createVector(0, random(0, 1));
 };
-console.log("Volume", volume);
 var theyExpand = 2 + 10 * volume;
-console.log("theyExpand", theyExpand);
 
 // use FFT bin level to change speed and diameter
 Bubble.prototype.update = function(someLevel) {
@@ -132,17 +148,170 @@ Bubble.prototype.update = function(someLevel) {
   }
 
   this.diameter = map(someLevel, 0, 255, 30, 0) * this.scale * theyExpand;
+  console.log('Diameter ', this.diameter)
 
   ellipse(this.position.x, this.position.y, this.diameter, this.diameter);
 };
 
-function drawbubbles(binCount, spectrum) {
+function drawbubbles() {
   for (var i = 0; i < binCount; i++) {
     colorMode(HSB);
-    fill(i, 255, 255);
-    bubbles[i].update(spectrum[i]);
+    fill(i, i, 255);
+    bubbles[i].update(spectrum[i] + 20);
     // update x position (in case we change the bin count)
     // bubbles[i].position.x = map(i, 0, binCount, 0, width * 2)
   }
 }
+function drawCircle(){
+  image(img, 0, height / 2, img.width / 2, img.height / 2);
+  let circleColor;
+  noStroke()
+  // The getLevel() method returns values between 0 and 1,
+  // so map() is used to convert the values to larger numbers
+  scale = map(amplitude.getLevel(), 0, 1.0, 10, width);
+  console.log(scale)
+  // Draw the circle based on the volume
+  stroke('red');
+  strokeWeight(3)
+  noFill()
+  // fill(89, 51, 1);
+  ellipse(width/2, height/2, scale-150, scale-150)
+  stroke('green');
+  ellipse(width/2, height/2, scale-10, scale-10)
+  stroke('blue');
+  strokeWeight(3)
+  ellipse(width/2, height/2, scale-130, scale-130)
+  stroke('yellow');
+  ellipse(width/2, height/2, scale-135, scale-135)
+  stroke('red');
+  ellipse(width/2, height/2, scale-15, scale-15)
+  stroke('green');
+  ellipse(width/2, height/2, scale-20, scale-20)
+  stroke('yellow');
+  ellipse(width/2, height/2, scale-125, scale-125)
+  stroke('green');
+  strokeWeight(3)
+  ellipse(width/2, height/2, scale-25, scale-25)
 
+  strokeWeight(3)
+  ellipse(width/2, height/2, scale-90, scale-90)
+  stroke('yellow');
+  ellipse(width/2, height/2, scale-85, scale-85)
+  stroke('red');
+  ellipse(width/2, height/2, scale-80, scale-80)
+  stroke('green');
+  ellipse(width/2, height/2, scale-75, scale-75)
+  stroke('yellow');
+  ellipse(width/2, height/2, scale-70, scale-70)
+}
+
+function drawStar(){
+  var spectrum = fft.analyze();
+  // noStroke();
+  colorMode(RGB)
+  background(0)
+  translate(width / 2, height / 5);
+  for (var i = 0; i < spectrum.length; i++) {
+    var angle = map(i, 0, spectrum.length, 0, 100);
+    var amp = spectrum[i];
+    var r = map(amp, 0, 1024, 15, 50);
+    // fill(255, 255, 255);
+    var x = r * cos(angle);
+    var y = r * sin(angle);
+    // stroke(255, 255, i, 23);
+    stroke(i, random(0, i), 255, 20);
+    strokeWeight(1.5)
+    // stroke(70, 255, 255, 23);
+    line(0, 0, x, y);
+    
+    var r = map(amp, 0, 256, 0, 300);
+    fill(255, 255, 255);
+    var x = r * cos(angle);
+    var y = r * sin(angle);
+    strokeWeight(3)
+    // stroke(255, 200, 200, 23);
+    line(0, 0, x, y);
+  }
+
+  // Little lights, left to right
+
+  //lights on the left
+  strokeWeight(2)
+  translate(-500, -50);
+  for (var i = 0; i < 500; i++) {
+    colorMode(RGB)
+    var angle = map(i, 0, spectrum.length, 0, 100);
+    var amp = spectrum[i];
+    var r = map(amp-10, 0, 256, 0, 70);
+    fill(255, 0, 0);
+    var x = r * cos(angle);
+    var y = r * sin(angle);
+    stroke(255, 0, 196, 13);
+    line(0, 0, x, y);
+}
+
+translate(100, 0);
+  for (var i = 0; i < 500; i++) {
+    colorMode(RGB)
+    var angle = map(i, 0, spectrum.length, 0, 100);
+    var amp = spectrum[i];
+    var r = map(amp-10, 0, 256, 0, 70);
+    fill(255, 0, 0);
+    var x = r * cos(angle);
+    var y = r * sin(angle);
+    stroke(188, 255, 0, 13);
+    line(0, 0, x, y);
+  }
+  
+  translate(100, 0);
+  for (var i = 0; i < 500; i++) {
+    colorMode(RGB)
+    var angle = map(i, 0, spectrum.length, 0, 100);
+    var amp = spectrum[i];
+    var r = map(amp-10, 0, 256, 0, 70);
+    fill(255, 0, 0);
+    var x = r * cos(angle);
+    var y = r * sin(angle);
+    stroke(255, 128, 0, 13);
+    line(0, 0, x, y);
+  }
+  
+  //lights on the right
+translate(600, 0);
+  for (var i = 0; i < 500; i++) {
+    colorMode(RGB)
+    var angle = map(i, 0, spectrum.length, 0, 180);
+    var amp = spectrum[i];
+    var r = map(amp-10, 0, 256, 0, 70);
+    fill(255, 0, 0);
+    var x = r * cos(angle);
+    var y = r * sin(angle);
+    stroke(255, 255, i, 13);
+    line(0, 0, x, y);
+}
+translate(100, 0);
+  for (var i = 0; i < 500; i++) {
+    colorMode(RGB)
+    var angle = map(i, 0, spectrum.length, 0, 100);
+    var amp = spectrum[i];
+    var r = map(amp-10, 0, 256, 0, 70);
+    fill(255, 0, 0);
+    var x = r * cos(angle);
+    var y = r * sin(angle);
+    stroke(111, 255, 0, 13);
+    line(0, 0, x, y);
+  }
+  
+  translate(100, 0);
+  for (var i = 0; i < 500; i++) {
+    colorMode(RGB)
+    var angle = map(i, 0, spectrum.length, 0, 100);
+    var amp = spectrum[i];
+    var r = map(amp-10, 0, 256, 0, 70);
+    fill(255, 0, 0);
+    var x = r * cos(angle);
+    var y = r * sin(angle);
+    stroke(0, 196, 255, 13);
+    line(0, 0, x, y);
+  }
+}
