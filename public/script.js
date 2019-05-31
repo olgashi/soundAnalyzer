@@ -21,7 +21,6 @@ function toggleSong() {
 
 function preload() {
   // song = loadSound("Meek Mill-Going Bad.mp3");
-  startTime = new Date().getTime() / 1000;
   song = loadSound("(I Can't Get No) Satisfaction.mp3");
   // song = loadSound("Meek Mill-Oodles O' Noodles Babies.mp3");
   // song = loadSound("Undercover Of The Night.mp3");
@@ -32,10 +31,10 @@ function setup() {
   // colorMode(HSB, 100);
 
   button = createButton("Play/Pause");
-  button.mousePressed(toggleSong);
+  button.mouseClicked(toggleSong);
 
   visualButton = createButton("Toggle Visual");
-  visualButton.mouseClicked(toggleVisual);
+  visualButton.mouseClicked(toggleView);
 
   song.play();
   fft = new p5.FFT(smoothing, 512);
@@ -59,7 +58,7 @@ function setup() {
   }
 }
 
-function mouseClicked() {
+function toggleView() {
   switch(visual) {
     case "":
       visual = "bubbles";
