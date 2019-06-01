@@ -4,7 +4,7 @@ var song, fft, button, backgroundColor;
 var beatCutoff = 0,
   beatDecayRate = 0.1,
   framesSinceLastBeat = 0,
-  beatHoldFrames = 25,
+  beatHoldFrames = 15,
   beatThreshold = 0.11;
 var binCount = 256; // size of resulting FFT array. Must be a power of 2 between 16 and 1024
 var volume = 0.01,
@@ -13,7 +13,7 @@ var visual = "bars";
 var spectrum;
 var bubbles = new Array(binCount);
 let w = 20;
-// const WebSocket = require("ws");
+
 // let data = 0;
 
 /*eslint-disable */
@@ -27,9 +27,9 @@ function toggleSong() {
 
 function preload() {
   // song = loadSound("Meek Mill-Going Bad.mp3");
-  // song = loadSound("(I Can't Get No) Satisfaction.mp3");
+  song = loadSound("(I Can't Get No) Satisfaction.mp3");
   // song = loadSound("Meek Mill-Oodles O' Noodles Babies.mp3");
-  song = loadSound("Got To Keep On.mp3");
+  // song = loadSound("Got To Keep On.mp3");
   // song = loadSound("Undercover Of The Night.mp3");
 }
 
@@ -139,7 +139,7 @@ function onBeat(maxVal) {
     random(0, maxVal),
     random(0, maxVal)
   );
-  socket.send('0000FF')
+  socket.send('blink')
 }
 
 function drawBars() {
