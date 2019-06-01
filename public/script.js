@@ -1,4 +1,4 @@
-//Beat is from
+//Beat detection credit:
 // https://github.com/therewasaguy/p5-music-viz/blob/master/demos/01d_beat_detect_amplitude/sketch.js
 var song, fft, button, backgroundColor;
 var beatCutoff = 0,
@@ -13,22 +13,29 @@ var visual = "bars";
 var spectrum;
 var bubbles = new Array(binCount);
 let w = 20;
-let img;
+// const WebSocket = require("ws");
+// let data = 0;
+
 /*eslint-disable */
+
+var socket = new WebSocket('ws://localhost:8080')
+
+
 function toggleSong() {
   song.isPlaying() ? song.pause() : song.play();
 }
 
 function preload() {
   // song = loadSound("Meek Mill-Going Bad.mp3");
-  song = loadSound("(I Can't Get No) Satisfaction.mp3");
+  // song = loadSound("(I Can't Get No) Satisfaction.mp3");
   // song = loadSound("Meek Mill-Oodles O' Noodles Babies.mp3");
+  song = loadSound("Got To Keep On.mp3");
   // song = loadSound("Undercover Of The Night.mp3");
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight / 2);
-  // colorMode(HSB, 100);
+  colorMode(RGB);
 
   button = createButton("Play/Pause");
   button.mouseClicked(toggleSong);
@@ -42,10 +49,8 @@ function setup() {
   amplitude = new p5.Amplitude();
   amplitude.setInput(song);
   amplitude.smooth(0.9);
-
   volume = amplitude.getLevel();
-
-  backgroundColor = color(0, 0, 255);
+  backgroundColor = color(0);
 
   //initialize bubbles
   for (var i = 0; i < bubbles.length; i++) {
@@ -79,13 +84,9 @@ function toggleView() {
     default:
       console.log('something is wrong in mouseClicked')
   }
-
-  // visual = visual === "bubbles" ? "bars" : "bubbles";
-  // redraw();
 }
 
 function toggleVisual() {
-  // visual == "bubbles" ? drawbubbles() : drawBars();
   switch(visual) {
     case "":
       drawBars()
@@ -101,16 +102,15 @@ function toggleVisual() {
       break
     default:
       console.log('something is wrong in toggleVisual')
-}
+  }
 }
 
 function draw() {
+  colorMode(HSB)
+  backgroundColor = color(0);
   background(backgroundColor);
   spectrum = fft.analyze();
-  // changingBG(256);
   toggleVisual()
-  // drawCircle();
-  // drawDanceFloor()
 }
 
 function changingBG(maxVal) {
@@ -139,13 +139,14 @@ function onBeat(maxVal) {
     random(0, maxVal),
     random(0, maxVal)
   );
+  socket.send('0000FF')
 }
 
 function drawBars() {
-  colorMode(RGB);
+  colorMode(HSB);
   for (var i = 0; i < spectrum.length; i++) {
-    fill(i, i, 255);
     var h = -height + map(spectrum[i], 0, 255, height, 0);
+    stroke(i, 100, 200)
     rect(i * w, height, w - 2, h);
   }
 }
@@ -195,7 +196,7 @@ function drawDanceFloor() {
 function drawLight(pos1, pos2, spectrum, clr1, clr2, clr3, alpha, stkWght=1) {
   translate(pos1, pos2);
   for (var i = 0; i < 500; i++) {
-    colorMode(RGB);
+    // colorMode(RGB);
     var angle = map(i, 0, spectrum.length, 0, 60);
     var amp = spectrum[i];
     var r = map(amp, 0, 128, 0, 50);
@@ -224,9 +225,11 @@ Bubble.prototype.update = function(someLevel) {
 };
 
 function drawbubbles() {
+  background('green')
+  colorMode(HSB);
   for (var i = 0; i < binCount; i++) {
-    colorMode(HSB);
-    fill(i, i, 255);
+    fill(i, i, 100);
+    stroke(i, 100, 200)
     bubbles[i].update(spectrum[i] + 20);
   }
 }
