@@ -26,8 +26,8 @@ function toggleSong() {
 }
 
 function preload() {
-  // song = loadSound("Meek Mill-Going Bad.mp3");
-  song = loadSound("(I Can't Get No) Satisfaction.mp3");
+  song = loadSound("Meek Mill-Going Bad.mp3");
+  // song = loadSound("(I Can't Get No) Satisfaction.mp3");
   // song = loadSound("Meek Mill-Oodles O' Noodles Babies.mp3");
   // song = loadSound("Got To Keep On.mp3");
   // song = loadSound("Undercover Of The Night.mp3");
@@ -139,7 +139,7 @@ function onBeat(maxVal) {
     random(0, maxVal),
     random(0, maxVal)
   );
-  socket.send('blink')
+  socket.send('dance')
 }
 
 function drawBars() {

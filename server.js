@@ -6,6 +6,8 @@ var five = require("johnny-five");
 const WebSocket = require("ws");
 const wss = new WebSocket.Server({ port: 8080 });
 const colors = ['00FF00', 'FFF714', 'FF0000', '0000FF', 'FF00FB', '42F4E8', 'f442e2', 'ffff07']
+var rainbow = ["FF0000", "FF7F00", "FFFF00", "00FF00", "0000FF", "4B0082", "8F00FF"];
+
 
 // const beatData = require("./public/script")
 
@@ -22,7 +24,7 @@ five.Board().on("ready", function() {
       blue: 5
     }
   });
-
+  let index = 0
   var led2 = new five.Led.RGB({
     pins: {
       red: 3,
@@ -45,7 +47,9 @@ five.Board().on("ready", function() {
       // console.log('connected')
       if (data === 'dance') {
         led1.color(colors[Math.floor(Math.random()*colors.length)])
-        led1.strobe(700);
+        led1.strobe(300);
+        led2.color(rainbow[Math.floor(Math.random()*rainbow.length)])
+        led1.strobe(200);
       }
     });
   });
