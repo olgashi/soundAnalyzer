@@ -10,26 +10,26 @@ var rainbow = ["FF0000", "FF7F00", "FFFF00", "00FF00", "0000FF", "4B0082", "8F00
 
 
 // const beatData = require("./public/script")
-
+//NOTE clear lights once the board is off???
 app.listen(port, () => {
-  console.log("we are live");
+  console.log(`we are live on port ${port}`);
 });
 app.use("/", express.static("public"));
 
 five.Board().on("ready", function() {
   var led1 = new five.Led.RGB({
     pins: {
-      red: 9,
-      green: 6,
-      blue: 5
+      red: 11,
+      green: 10,
+      blue: 9
     }
   });
-  let index = 0
+
   var led2 = new five.Led.RGB({
     pins: {
-      red: 3,
-      green: 10,
-      blue: 11
+      red: 6,
+      green: 5,
+      blue: 3
     }
   });
   led1.on();
@@ -46,10 +46,11 @@ five.Board().on("ready", function() {
       // console.log(data)
       // console.log('connected')
       if (data === 'dance') {
-        led1.color(colors[Math.floor(Math.random()*colors.length)])
-        led1.strobe(300);
+        led2.color(colors[Math.floor(Math.random()*colors.length)])
         led2.color(rainbow[Math.floor(Math.random()*rainbow.length)])
         led1.strobe(200);
+        // led2.strobe(200);
+        led2.toggle();
       }
     });
   });
