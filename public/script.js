@@ -1,20 +1,29 @@
 //Beat detection credit:
 // https://github.com/therewasaguy/p5-music-viz/blob/master/demos/01d_beat_detect_amplitude/sketch.js
 var song, fft, button, backgroundColor;
+// var colors = ["FF0000", "FF7F00", "FFFF00", "00FF00", "0000FF", "4B0082", "8F00FF"];
+var colors = ["red", "green", "yellow", "blue"];
+const COLORS_TO_RGB= {
+  red: [255, 0, 0],
+  green: [0, 255, 0], 
+  yellow: [255, 255, 0], 
+  // purple: [128, 0, 128], 
+  blue: [0, 0, 255]
+};
 var beatCutoff = 0,
   beatDecayRate = 0.1,
   framesSinceLastBeat = 0,
-  beatHoldFrames = 15,
+  beatHoldFrames = 30,
   beatThreshold = 0.11;
-var binCount = 256; // size of resulting FFT array. Must be a power of 2 between 16 and 1024
+var binCount =1024; // size of resulting FFT array. Must be a power of 2 between 16 and 1024
 var volume = 0.01,
-  smoothing = 0.8;
+  smoothing = 0.85;
 var visual = "bars";
 var spectrum;
-var bubbles = new Array(binCount / 2);
 let w = 20;
 let y = 0;
 let speed = 12;
+let lightsColor1, lightsColor2;
 
 /*eslint-disable */
 
@@ -25,17 +34,11 @@ function toggleSong() {
 }
 
 function preload() {
-  // song = loadSound("Meek Mill-Going Bad.mp3");
-  // song = loadSound("(I Can't Get No) Satisfaction.mp3");
-  // song = loadSound("Meek Mill-Oodles O' Noodles Babies.mp3");
-  // song = loadSound("Got To Keep On.mp3");
-  // song = loadSound("Undercover Of The Night.mp3");
-  // song = loadSound("WEEK22_19 Guest Mix - Luca Donzelli  (IT).mp3");
   song = loadSound("cctrimmed.mp3");
 }
 
 function setup() {
-  createCanvas(windowWidth, windowHeight - 250);
+  createCanvas(windowWidth, windowHeight - 150);
   colorMode(RGB);
   background(0);
 
@@ -51,16 +54,6 @@ function setup() {
   amplitude.setInput(song);
   amplitude.smooth(0.9);
   volume = amplitude.getLevel();
-
-  //initialize bubbles
-  for (var i = 0; i < bubbles.length; i++) {
-    var position = createVector(
-      // x position corresponds with position in the frequency spectrum
-      map(i, 0, binCount, 0, width * 2),
-      random(0, height)
-    );
-    bubbles[i] = new Bubble(position);
-  }
 }
 
 function toggleView() {
@@ -68,14 +61,14 @@ function toggleView() {
     case "":
       visual = "bubbles";
       break;
-    case "bubbles":
+    case "circle":
       visual = "bars";
       break;
     case "bars":
       visual = "lights";
       break;
     case "lights":
-      visual = "bubbles";
+      visual = "circle";
       break;
     default:
       console.log("something is wrong in mouseClicked");
@@ -88,9 +81,8 @@ function toggleVisual() {
     case "":
       drawBars();
       break;
-    case "bubbles":
-      // drawbubbles()
-      singleLight();
+    case "circle":
+      drawCirlce();
       break;
     case "bars":
       drawBars();
@@ -106,20 +98,19 @@ function toggleVisual() {
 function draw() {
   // colorMode(HSB)
   background(0);
-  // changingBG(256)
+  // changingLightsColor()
   spectrum = fft.analyze();
   toggleVisual();
 }
 
-function changingBG(maxColorValue) {
+function changingLightsColor() {
   var level = amplitude.getLevel();
-  detectBeat(level, maxColorValue);
+  detectBeat(level);
 }
 
-function detectBeat(level, maxColorValue) {
+function detectBeat(level) {
   if (level > beatCutoff && level > beatThreshold) {
-    console.log("here");
-    onBeat(maxColorValue);
+    onBeat();
     beatCutoff = level * 1.3;
     framesSinceLastBeat = 0;
   } else {
@@ -131,25 +122,36 @@ function detectBeat(level, maxColorValue) {
     }
   }
 }
-
-function onBeat(maxColorValue) {
-  backgroundColor = color(
-    random(0, maxColorValue),
-    random(0, maxColorValue),
-    random(0, maxColorValue)
-  );
-  socket.send("dance");
+let rgbColors = [];
+function onBeat() {
+  // backgroundColor = color(
+  //   random(0, maxColorValue),
+  //   random(0, maxColorValue),
+  //   random(0, maxColorValue)
+  // );
+  lightsColor1 = colors[Math.floor(Math.random()*colors.length)]
+  lightsColor2 = colors[Math.floor(Math.random()*colors.length)]
+  rgbColors.push(lightsColor1)
+  rgbColors.push(lightsColor2)
+  console.log(rgbColors)
+  // socket.send("dance");
+  socket.send(rgbColors)
+  rgbColors = []
 }
 
 function drawBars() {
   //  background(0);
-  colorMode(RGB);
-  // noFill()
+  // colorMode(RGB);
+  // background(lightsColor1)
+  colorMode(HSB)
+  changingLightsColor()
   for (var i = 0; i < spectrum.length; i++) {
     var h = -height + map(spectrum[i], 0, 255, height, 0);
-    stroke(256, i, 50);
+    // stroke(i, i, 255);
     strokeWeight(3);
-    fill(219, 200, 240);
+    // backgroundColor(COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2])
+    fill(i, i, 255);
+    // fill(COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2]);
     rect(i * w, height, w - 2, h);
   }
 }
@@ -158,112 +160,81 @@ function drawDanceFloor() {
   //  background(0);
   var spectrum = fft.analyze();
   colorMode(RGB);
-  changingBG(10);
-  translate(width / 2, height / 2 - 50);
+  changingLightsColor();
+  background(0)
+  translate(width / 2, height / 2 + 100);
 
-  for (var i = 0; i < spectrum.length; i++) {
-    //disco ball
-    var angle = map(i, 0, spectrum.length, 0, 100);
-    var amp = spectrum[i];
-    var r = map(amp, 0, 1024, 50, 120);
-    var x = r * cos(angle);
-    var y = r * sin(angle);
-    stroke(i, random(0, i), 255, 20);
-    strokeWeight(3);
-    line(0, 0, x, y);
-    var r = map(amp, 0, 256, 0, 125);
-    fill(255, 255, 255);
-    var x = r * cos(angle);
-    var y = r * sin(angle);
-    strokeWeight(2);
-    point(x, y);
-    var angle = map(i, 0, spectrum.length / 10, 0, random(0, 10));
-    var r = map(amp, 0, 2, 0, 400);
-    var x = r * cos(angle);
-    var y = r * sin(angle);
-    stroke(i, random(0, i), 255, 10);
-    strokeWeight(0.6);
-    line(0, 0, x, y);
-  }
-  //lights on the left
+  // for (var i = 0; i < 180; i++) {
+  //   //disco ball
+  //   var angle = map(i, 0, spectrum.length, 0, binCount);
+  //   var amp = spectrum[i];
+  //   var r = map(amp, 0, 256, 0, 225);
+  //   // var r = map(amp, 0, 1024, 50, 120);
+  //   var x = r * cos(angle);
+  //   var y = r * sin(angle);
+  //   stroke(0, 255, 255, 60);
+  //   strokeWeight(3);
+  //   line(0, 0, x, y);
+  // }
+  //small lights
   strokeWeight(1.5);
-  drawLight(-600, -230, spectrum, 255, 0, 196, 30);
-  drawLight(100, 0, spectrum, 188, 255, 0, 30);
-  drawLight(100, 0, spectrum, 255, 128, 0, 30);
-  drawLight(100, 0, spectrum, 255, 255, 0, 30);
-  drawLight(100, 0, spectrum, 220, 20, 60, 30);
-  drawLight(100, 0, spectrum, 0, 196, 255, 30);
-  drawLight(100, 0, spectrum, 188, 255, 0, 30);
-  drawLight(100, 0, spectrum, 255, 128, 0, 30);
-  drawLight(100, 0, spectrum, 255, 255, 0, 30);
-  drawLight(100, 0, spectrum, 111, 255, 0, 30);
-  drawLight(100, 0, spectrum, 0, 196, 255, 30);
-  drawLight(100, 0, spectrum, 255, 0, 196, 30);
-  drawLight(100, 0, spectrum, 256, 250, 240, 30);
+  drawLight(-400, -310, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(100, 0, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  drawLight(80, -80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(100, 0, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  drawLight(80, 80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  drawLight(80, -80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  drawLight(80, 80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  drawLight(80, -80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  drawLight(80, 80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  drawLight(80, -80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  drawLight(80, 80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(100, 0, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(100, 0, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+
+  // drawLight(80, 80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(80, -80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(80, 80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(80, -80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(80, 80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(80, -80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
+  // drawLight(80, 80, spectrum, COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2], 30);
 }
 
-function drawLight(pos1, pos2, spectrum, clr1, clr2, clr3, alpha, stkWght = 1) {
+function drawLight(pos1, pos2, spectrum, clr1, clr2, clr3, alpha = 100, stkWght = 1) {
   translate(pos1, pos2);
   for (var i = 0; i < 180; i++) {
     colorMode(RGB);
     var angle = map(i, 0, spectrum.length, 0, 180);
     var amp = spectrum[i];
-    var r = map(amp, 0, 128, 0, 15);
+    var r = map(amp, 0, 128, 0, 25);
     var x = r * cos(angle);
     var y = r * sin(angle);
     stroke(clr1, clr2, clr3, alpha);
-    line(0, 0, x, y);
+    // line(0, 0, x, y);
+    ellipse(x, y, 2)
     strokeWeight(stkWght);
   }
 }
-var Bubble = function(position) {
-  this.position = position;
-  this.scale = random(0, 4);
-  this.speed = createVector(0, random(0, 2));
-};
-var expandSize = 2 + 10 * volume;
 
-// use FFT bin level to change speed and diameter
-Bubble.prototype.update = function(someLevel) {
-  this.position.y += this.speed.y / map(someLevel, 0, 255, 0.25, 2);
-  if (this.position.y > height) {
-    this.position.y = 0;
-  }
-  this.diameter = map(someLevel, 0, 255, 0, 30) * this.scale * expandSize;
-  ellipse(this.position.x, this.position.y, this.diameter, this.diameter);
-};
-
-function drawbubbles() {
-  background("green");
-  colorMode(HSB);
-  for (var i = 0; i < binCount / 2; i++) {
-    fill(256, 256, 256);
-    stroke(i, 100, 200);
-    bubbles[i].update(spectrum[i] + 20);
-  }
-}
-
-function singleLight() {
+function drawCirlce() {
   translate(width / 2, height / 2);
-  for (var i = 0; i < spectrum.length/3; i++) {
+  changingLightsColor()
+  for (var i = 0; i < 160; i++) {
     // colorMode(HSB);
-    var angle = map(i, 0, spectrum.length, 0, 300);
+    var angle = map(i, 0, spectrum.length, 0, 180);
     var amp = spectrum[i];
-    var r = map(amp, 0, 128, 0, 150);
+    var r = map(amp, 0, 128, 0, 250);
     var x = r * cos(angle);
     var y = r * sin(angle);
-    // fill(219, 200, 240);
-    stroke(0, 191, 255);
-    // if (i % 2 === 0) {
-    //   stroke(0, 191, 255);
-    // // } else if (i % 3 === 0) {
-    // //   stroke(256, 250, 240);
-    // } else {
-    //   stroke(255, 102, 0);
-    // }
-
-    // line(0, 0, x, y);
-    point(x, y);
-    strokeWeight(3);
+    // fill(COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2]);
+    stroke(COLORS_TO_RGB[lightsColor1][0], COLORS_TO_RGB[lightsColor1][1], COLORS_TO_RGB[lightsColor1][2]);
+    // point(x, y);
+    // point(x, y+ 2);
+    // point(x, y+ 4);
+    // point(x+2, y);
+    // point(x + 4,y);
+    ellipse(x, y, 2)
+    strokeWeight(2);
   }
 }
