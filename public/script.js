@@ -24,6 +24,7 @@ let w = 20;
 let y = 0;
 let speed = 12;
 let lightsColor1, lightsColor2;
+let moveLeft, moveRight;
 
 /*eslint-disable */
 
@@ -108,10 +109,14 @@ function changingLightsColor() {
   var level = amplitude.getLevel();
   detectBeat(level);
 }
+function moveDancer() {
+  moveLeft =  Math.random() < 0.5 ? -5 : 5;
+}
 
 function detectBeat(level) {
   if (level > beatCutoff && level > beatThreshold) {
     onBeat();
+    moveDancer()
     beatCutoff = level * 1.3;
     framesSinceLastBeat = 0;
   } else {
@@ -123,6 +128,8 @@ function detectBeat(level) {
     }
   }
 }
+
+
 let rgbColors = [];
 function onBeat() {
   // backgroundColor = color(
@@ -157,17 +164,23 @@ function drawBars() {
   }
 }
 
+let xPos = 0;
+let yPos = 0; 
 function drawDanceFloor() {
   //  background(0);
   var spectrum = fft.analyze();
-  
   colorMode(RGB);
   changingLightsColor();
   background(lightsColor1)
-  translate(100, 100);
-  image(img, 0, 0);
-  image(img, 350, 0)
-  image(img, 700, 0)
+  console.log('width', width)
+  console.log('xPos ', xPos)
+  if (xPos > width-100 || xPos < 0) {
+    xPos = 0
+  }
+  xPos += moveLeft
+  image(img, xPos, -5);
+  // image(img, 350, 0)
+  // image(img, 700, 0)
   stroke(0)
 }
 
