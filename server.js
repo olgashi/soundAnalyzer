@@ -38,7 +38,6 @@ five.Board().on("ready", function() {
   wss.on("connection", function(ws, req) {
     ws.on("message", function(color) {
       let rgbColors = color.split(',')
-      // console.log(rgbColors)
       led1.color(rgbColors[0])
       // led2.color(rgbColors[1])
       led2.toggle()
