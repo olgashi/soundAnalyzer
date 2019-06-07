@@ -157,18 +157,18 @@ function drawBars() {
 }
 
 let xPos = 0;
-let yPos = 0;
+// let yPos = 0;
 function drawDanceFloor() {
   colorMode(RGB);
   changingLightsColor();
   background(lightsColor1);
-  console.log("width", width);
-  console.log("xPos ", xPos);
+  // console.log("width", width);
+  // console.log("xPos ", xPos);
   if (xPos > width - 100 || xPos < 0) {
     xPos = 0;
   }
   xPos += moveLeft;
-  image(img, xPos, -5);
+  image(img, xPos, 50);
   stroke(0);
 }
 //may need later
@@ -204,7 +204,7 @@ function drawCirlce() {
     stroke(0);
     var angle = map(i, 0, spectrum.length, 0, 120);
     var amp = spectrum[i];
-    var r = map(amp, 0, 128, 0, 100);
+    var r = map(amp, 0, 128, 0, 150);
     var x = r * cos(angle);
     var y = r * sin(angle);
     stroke(
@@ -212,7 +212,7 @@ function drawCirlce() {
       COLORS_TO_RGB[lightsColor1][1],
       COLORS_TO_RGB[lightsColor1][2]
     );
-    ellipse(x, y, 3);
+    ellipse(x, y, 10);
     strokeWeight(2);
   }
 }
